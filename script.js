@@ -10,18 +10,17 @@ const messages = {
   comparison: 'O valor de B deve ser maior que o valor de A.'
 };
 
-// Exibe mensagens de erro
-function showError(inputElement, messageElement, message) {
-  messageElement.classList.add('error');
-  messageElement.textContent = message;
-  inputElement.classList.add('error-border');
+// Exibe mensagens de erro no feedback geral
+function showError(message) {
+  feedbackMessage.classList.remove('success');
+  feedbackMessage.classList.add('error');
+  feedbackMessage.textContent = message;
 }
 
 // Remove mensagens de erro
-function clearError(inputElement, messageElement) {
-  messageElement.classList.remove('error');
-  messageElement.textContent = '';
-  inputElement.classList.remove('error-border');
+function clearError() {
+  feedbackMessage.classList.remove('error');
+  feedbackMessage.textContent = '';
 }
 
 // Valida se o campo está vazio ou contém números inválidos
@@ -48,19 +47,14 @@ function validateComparison(valueA, valueB) {
 
 // Valida um campo individual
 function validateInput(inputElement) {
-  const messageElement = document.getElementById(`message-${inputElement.id}`);
   const fieldType = inputElement.type;
-
   const validationStatus = validateInputEmpty(inputElement.value, fieldType);
 
   if (!validationStatus.status) {
-    showError(inputElement, messageElement, validationStatus.message);
-    return false;
-  } else {
-    clearError(inputElement, messageElement);
+    return { status: false, message: validationStatus.message };
   }
 
-  return true;
+  return { status: true };
 }
 
 // Evento de submit do formulário
@@ -69,10 +63,15 @@ form.addEventListener('submit', function (e) {
 
   const formFields = document.querySelectorAll('form input');
   let allValid = true;
+  let errorMessage = '';
 
+  // Valida cada campo
   formFields.forEach(field => {
-    if (!validateInput(field)) {
+    const validationResult = validateInput(field);
+
+    if (!validationResult.status) {
       allValid = false;
+      errorMessage = validationResult.message; // Captura a mensagem de erro
     }
   });
 
@@ -83,26 +82,21 @@ form.addEventListener('submit', function (e) {
     const comparisonStatus = validateComparison(valueA, valueB);
 
     if (!comparisonStatus.status) {
-      showError(fieldB, document.getElementById('message-field-b'), comparisonStatus.message);
-      feedbackMessage.classList.remove('success');
-      feedbackMessage.classList.add('error');
-      feedbackMessage.textContent = 'Erro: O valor de B deve ser maior que o valor de A.';
+      showError(comparisonStatus.message);
     } else {
-      clearError(fieldB, document.getElementById('message-field-b'));
+      clearError();
       feedbackMessage.classList.remove('error');
       feedbackMessage.classList.add('success');
       feedbackMessage.textContent = 'Sucesso! O valor de B é maior que o valor de A.';
     }
   } else {
-    feedbackMessage.classList.remove('success');
-    feedbackMessage.classList.add('error');
-    feedbackMessage.textContent = 'Erro: Verifique os campos preenchidos.';
+    showError(errorMessage); // Exibe a mensagem de erro capturada
   }
 });
 
 // Evento de validação ao digitar
 document.addEventListener('input', function (e) {
   if (e.target.tagName === 'INPUT') {
-    validateInput(e.target);
+    clearError(); // Limpa a mensagem de erro ao digitar
   }
 });
